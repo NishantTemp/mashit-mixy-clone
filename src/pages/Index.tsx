@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Play, Pause, Music, Plus, RotateCcw, Edit, Share } from 'lucide-react';
+import { Play, Pause, Music, Plus, Edit, Share, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Index = () => {
@@ -90,9 +90,12 @@ const Index = () => {
           {/* Flip Button */}
           <button
             onClick={handleFlip}
-            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 sm:p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner flex-shrink-0"
+            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 sm:p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner flex-shrink-0 relative"
           >
-            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
+            <div className="flex items-center justify-center">
+              <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 text-white/70" />
+              <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-white/70 -ml-1" />
+            </div>
           </button>
           
           <SongCard 
