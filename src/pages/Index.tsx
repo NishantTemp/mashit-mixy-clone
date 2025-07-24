@@ -20,34 +20,34 @@ const Index = () => {
 
   const SongCard = ({ type, song, onClick }) => (
     <div 
-      className="bg-[#1A1A1A] rounded-2xl p-6 border border-[#2A2A2A] cursor-pointer hover:bg-[#202020] transition-all duration-200 flex-1 min-h-[200px] flex flex-col items-center justify-center space-y-4"
+      className="bg-[#1A1A1A] rounded-2xl p-4 sm:p-6 border border-[#2A2A2A] cursor-pointer hover:bg-[#202020] transition-all duration-200 flex-1 min-h-[180px] sm:min-h-[200px] flex flex-col items-center justify-center space-y-3 sm:space-y-4"
       onClick={onClick}
     >
       {song ? (
         <>
-          <div className="w-20 h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
             <img 
               src={`https://images.unsplash.com/${song.image}?w=80&h=80&fit=crop`} 
               alt="Album art"
               className="w-full h-full rounded-xl object-cover"
             />
           </div>
-          <div className="text-center">
-            <h3 className="text-white/90 font-medium text-sm mb-1">{song.title}</h3>
-            <p className="text-white/60 text-xs">{song.artist}</p>
+          <div className="text-center flex-1 min-w-0">
+            <h3 className="text-white/90 font-medium text-xs sm:text-sm mb-1 truncate">{song.title}</h3>
+            <p className="text-white/60 text-xs truncate">{song.artist}</p>
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center space-y-3">
-          <div className="w-20 h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
             <div className="relative">
-              <Music className="w-8 h-8 text-white/40" />
-              <Plus className="w-4 h-4 text-white/40 absolute -top-1 -right-1" />
+              <Music className="w-6 h-6 sm:w-8 sm:h-8 text-white/40" />
+              <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-white/40 absolute -top-1 -right-1" />
             </div>
           </div>
         </div>
       )}
-      <div className="text-center">
+      <div className="text-center mt-auto">
         <span className="text-[#7A6FF0] text-xs font-medium uppercase tracking-wider">
           {type}
         </span>
@@ -71,16 +71,16 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white p-4 md:p-8">
-      <div className="max-w-2xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#0D0D0D] text-white p-4 sm:p-8">
+      <div className="max-w-2xl mx-auto space-y-6 sm:space-y-8 w-full">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-white/90 mb-2">Mashit</h1>
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white/90 mb-2">Mashit</h1>
           <p className="text-white/60 text-sm">Create your perfect mashup</p>
         </div>
 
         {/* Song Selection Row */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 w-full">
           <SongCard 
             type="Vocal" 
             song={vocalSong} 
@@ -90,9 +90,9 @@ const Index = () => {
           {/* Flip Button */}
           <button
             onClick={handleFlip}
-            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner"
+            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 sm:p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner flex-shrink-0"
           >
-            <RotateCcw className="w-5 h-5 text-white/70" />
+            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
           </button>
           
           <SongCard 
@@ -103,15 +103,15 @@ const Index = () => {
         </div>
 
         {/* Waveform Visualizer */}
-        <div className="bg-[#1A1A1A] rounded-2xl p-8 border border-[#2A2A2A]">
-          <div className="flex items-center justify-center space-x-1 h-16">
-            {[...Array(40)].map((_, i) => (
+        <div className="bg-[#1A1A1A] rounded-2xl p-6 sm:p-8 border border-[#2A2A2A] w-full">
+          <div className="flex items-center justify-center space-x-1 h-12 sm:h-16 overflow-hidden">
+            {[...Array(30)].map((_, i) => (
               <div
                 key={i}
-                className="bg-[#7A6FF0] rounded-full transition-all duration-300"
+                className="bg-[#7A6FF0] rounded-full transition-all duration-300 flex-shrink-0"
                 style={{
-                  width: '3px',
-                  height: `${Math.random() * 40 + 10}px`,
+                  width: '2px',
+                  height: `${Math.random() * 30 + 8}px`,
                   opacity: isPlaying ? 0.8 : 0.3,
                   animationDelay: `${i * 50}ms`
                 }}
@@ -124,27 +124,27 @@ const Index = () => {
         <div className="flex justify-center">
           <button
             onClick={handlePlayPause}
-            className="bg-[#7A6FF0] hover:bg-[#6B5FE0] rounded-full p-4 transition-all duration-200 shadow-lg"
+            className="bg-[#7A6FF0] hover:bg-[#6B5FE0] rounded-full p-3 sm:p-4 transition-all duration-200 shadow-lg"
           >
             {isPlaying ? (
-              <Pause className="w-8 h-8 text-white" />
+              <Pause className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             ) : (
-              <Play className="w-8 h-8 text-white ml-1" />
+              <Play className="w-6 h-6 sm:w-8 sm:h-8 text-white ml-1" />
             )}
           </button>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center w-full">
           <Button
             variant="outline"
-            className="bg-[#1A1A1A] border-[#2A2A2A] text-white/80 hover:bg-[#202020] hover:text-white rounded-full px-6 py-3"
+            className="bg-[#1A1A1A] border-[#2A2A2A] text-white/80 hover:bg-[#202020] hover:text-white rounded-full px-6 py-3 flex-1 sm:flex-none"
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
           <Button
-            className="bg-[#7A6FF0] hover:bg-[#6B5FE0] text-white rounded-full px-6 py-3"
+            className="bg-[#7A6FF0] hover:bg-[#6B5FE0] text-white rounded-full px-6 py-3 flex-1 sm:flex-none"
           >
             <Share className="w-4 h-4 mr-2" />
             Share
