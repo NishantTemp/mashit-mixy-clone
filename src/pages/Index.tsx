@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Play, Pause, Music, Plus, Edit, Share, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SongSearch from '@/components/SongSearch';
+import { type Song } from '@/types/song';
 
 const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [vocalSong, setVocalSong] = useState(null);
-  const [instrumentalSong, setInstrumentalSong] = useState(null);
+  const [vocalSong, setVocalSong] = useState<Song | null>(null);
+  const [instrumentalSong, setInstrumentalSong] = useState<Song | null>(null);
   const [activeSearch, setActiveSearch] = useState<'vocal' | 'instrumental' | null>(null);
 
   const handlePlayPause = () => {
@@ -24,7 +25,7 @@ const Index = () => {
     setActiveSearch(type);
   };
 
-  const handleSelectSong = (song) => {
+  const handleSelectSong = (song: Song) => {
     if (activeSearch === 'vocal') {
       setVocalSong(song);
     } else if (activeSearch === 'instrumental') {
@@ -37,7 +38,12 @@ const Index = () => {
     setActiveSearch(null);
   };
 
-  const SongCard = ({ type, song, onClick, showSearch }) => (
+  const SongCard = ({ type, song, onClick, showSearch }: {
+    type: 'vocal' | 'instrumental';
+    song: Song | null;
+    onClick: () => void;
+    showSearch: boolean;
+  }) => (
     <div className="flex-1 min-h-[180px] sm:min-h-[200px] relative">
       <div 
         className="bg-[#1A1A1A] rounded-2xl p-4 sm:p-6 border border-[#2A2A2A] cursor-pointer hover:bg-[#202020] transition-all duration-200 min-h-[180px] sm:min-h-[200px] flex flex-col items-center justify-center space-y-3 sm:space-y-4" 
@@ -79,7 +85,7 @@ const Index = () => {
           <SongSearch
             onSelectSong={handleSelectSong}
             onClose={handleCloseSearch}
-            searchPlaceholder={`Search ${type.toLowerCase()} songs...`}
+            searchPlaceholder={`Search ${type} songs...`}
           />
         </div>
       )}
@@ -97,7 +103,7 @@ const Index = () => {
         {/* Song Selection Row */}
         <div className="flex items-start gap-2 sm:gap-4 w-full">
           <SongCard 
-            type="Vocal" 
+            type="vocal" 
             song={vocalSong} 
             onClick={() => handleSongCardClick('vocal')} 
             showSearch={activeSearch === 'vocal'}
@@ -115,7 +121,7 @@ const Index = () => {
           </button>
           
           <SongCard 
-            type="Instrumental" 
+            type="instrumental" 
             song={instrumentalSong} 
             onClick={() => handleSongCardClick('instrumental')} 
             showSearch={activeSearch === 'instrumental'}
