@@ -8,8 +8,7 @@ const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [vocalSong, setVocalSong] = useState(null);
   const [instrumentalSong, setInstrumentalSong] = useState(null);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchType, setSearchType] = useState<'vocal' | 'instrumental'>('vocal');
+  const [activeSearch, setActiveSearch] = useState<'vocal' | 'instrumental' | null>(null);
 
   const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
@@ -22,52 +21,68 @@ const Index = () => {
   };
 
   const handleSongCardClick = (type: 'vocal' | 'instrumental') => {
-    setSearchType(type);
-    setSearchOpen(true);
+    setActiveSearch(type);
   };
 
   const handleSelectSong = (song) => {
-    if (searchType === 'vocal') {
+    if (activeSearch === 'vocal') {
       setVocalSong(song);
-    } else {
+    } else if (activeSearch === 'instrumental') {
       setInstrumentalSong(song);
     }
+    setActiveSearch(null);
   };
 
-  const SongCard = ({ type, song, onClick }) => (
-    <div 
-      className="bg-[#1A1A1A] rounded-2xl p-4 sm:p-6 border border-[#2A2A2A] cursor-pointer hover:bg-[#202020] transition-all duration-200 flex-1 min-h-[180px] sm:min-h-[200px] flex flex-col items-center justify-center space-y-3 sm:space-y-4" 
-      onClick={onClick}
-    >
-      {song ? (
-        <>
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
-            <img 
-              src={`https://images.unsplash.com/${song.image}?w=80&h=80&fit=crop`} 
-              alt="Album art" 
-              className="w-full h-full rounded-xl object-cover" 
-            />
-          </div>
-          <div className="text-center flex-1 min-w-0">
-            <h3 className="text-white/90 font-medium text-xs sm:text-sm mb-1 truncate">{song.title}</h3>
-            <p className="text-white/60 text-xs truncate">{song.artist}</p>
-          </div>
-        </>
-      ) : (
-        <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
-            <div className="relative">
-              <Music className="w-6 h-6 sm:w-8 sm:h-8 text-white/40" />
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-white/40 absolute -top-1 -right-1" />
+  const handleCloseSearch = () => {
+    setActiveSearch(null);
+  };
+
+  const SongCard = ({ type, song, onClick, showSearch }) => (
+    <div className="flex-1 min-h-[180px] sm:min-h-[200px] relative">
+      <div 
+        className="bg-[#1A1A1A] rounded-2xl p-4 sm:p-6 border border-[#2A2A2A] cursor-pointer hover:bg-[#202020] transition-all duration-200 min-h-[180px] sm:min-h-[200px] flex flex-col items-center justify-center space-y-3 sm:space-y-4" 
+        onClick={onClick}
+      >
+        {song ? (
+          <>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
+              <img 
+                src={`https://images.unsplash.com/${song.image}?w=80&h=80&fit=crop`} 
+                alt="Album art" 
+                className="w-full h-full rounded-xl object-cover" 
+              />
+            </div>
+            <div className="text-center flex-1 min-w-0">
+              <h3 className="text-white/90 font-medium text-xs sm:text-sm mb-1 truncate">{song.title}</h3>
+              <p className="text-white/60 text-xs truncate">{song.artist}</p>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-3">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="relative">
+                <Music className="w-6 h-6 sm:w-8 sm:h-8 text-white/40" />
+                <Plus className="w-3 h-3 sm:w-4 sm:h-4 text-white/40 absolute -top-1 -right-1" />
+              </div>
             </div>
           </div>
+        )}
+        <div className="text-center mt-auto">
+          <span className="text-[#7A6FF0] text-xs font-medium uppercase tracking-wider">
+            {type}
+          </span>
+        </div>
+      </div>
+      
+      {showSearch && (
+        <div className="absolute top-full left-0 right-0 z-10 mt-2">
+          <SongSearch
+            onSelectSong={handleSelectSong}
+            onClose={handleCloseSearch}
+            searchPlaceholder={`Search ${type.toLowerCase()} songs...`}
+          />
         </div>
       )}
-      <div className="text-center mt-auto">
-        <span className="text-[#7A6FF0] text-xs font-medium uppercase tracking-wider">
-          {type}
-        </span>
-      </div>
     </div>
   );
 
@@ -80,17 +95,18 @@ const Index = () => {
         </div>
 
         {/* Song Selection Row */}
-        <div className="flex items-center gap-2 sm:gap-4 w-full">
+        <div className="flex items-start gap-2 sm:gap-4 w-full">
           <SongCard 
             type="Vocal" 
             song={vocalSong} 
             onClick={() => handleSongCardClick('vocal')} 
+            showSearch={activeSearch === 'vocal'}
           />
           
           {/* Flip Button */}
           <button 
             onClick={handleFlip} 
-            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 sm:p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner flex-shrink-0 relative"
+            className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-2 sm:p-3 hover:bg-[#202020] transition-all duration-200 shadow-inner flex-shrink-0 relative mt-4"
           >
             <div className="flex items-center justify-center">
               <ArrowLeft className="w-3 h-3 sm:w-4 sm:h-4 text-white/70" />
@@ -102,6 +118,7 @@ const Index = () => {
             type="Instrumental" 
             song={instrumentalSong} 
             onClick={() => handleSongCardClick('instrumental')} 
+            showSearch={activeSearch === 'instrumental'}
           />
         </div>
 
@@ -154,14 +171,6 @@ const Index = () => {
           </Button>
         </div>
       </div>
-
-      {/* Song Search Modal */}
-      <SongSearch
-        isOpen={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelectSong={handleSelectSong}
-        searchPlaceholder={`Search ${searchType} songs...`}
-      />
     </div>
   );
 };

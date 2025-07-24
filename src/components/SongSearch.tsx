@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Search, X, Music } from 'lucide-react';
+import { Search, Music } from 'lucide-react';
 
 interface Song {
   id: number;
@@ -10,13 +10,12 @@ interface Song {
 }
 
 interface SongSearchProps {
-  isOpen: boolean;
-  onClose: () => void;
   onSelectSong: (song: Song) => void;
+  onClose: () => void;
   searchPlaceholder?: string;
 }
 
-const SongSearch = ({ isOpen, onClose, onSelectSong, searchPlaceholder = "Search songs..." }: SongSearchProps) => {
+const SongSearch = ({ onSelectSong, onClose, searchPlaceholder = "Search songs..." }: SongSearchProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Song[]>([]);
 
@@ -48,72 +47,66 @@ const SongSearch = ({ isOpen, onClose, onSelectSong, searchPlaceholder = "Search
     onSelectSong(song);
     setSearchQuery('');
     setSearchResults([]);
-    onClose();
   };
 
-  if (!isOpen) return null;
+  // Close search when clicking outside
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#1A1A1A] rounded-2xl border border-[#2A2A2A] w-full max-w-md max-h-[80vh] overflow-hidden">
-        {/* Header */}
-        <div className="p-4 border-b border-[#2A2A2A]">
-          <div className="flex items-center gap-3">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#0D0D0D] border border-[#2A2A2A] rounded-xl pl-10 pr-4 py-3 text-white/90 placeholder-white/40 focus:outline-none focus:border-[#7A6FF0] transition-colors"
-                autoFocus
-              />
-            </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5 text-white/70" />
-            </button>
-          </div>
+    <div className="bg-[#1A1A1A] rounded-xl border border-[#2A2A2A] shadow-xl max-w-sm w-full">
+      {/* Search Input */}
+      <div className="p-3 border-b border-[#2A2A2A]">
+        <div className="relative">
+          <Search className="w-4 h-4 text-white/40 absolute left-3 top-1/2 transform -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-[#0D0D0D] border border-[#2A2A2A] rounded-lg pl-10 pr-4 py-2 text-sm text-white/90 placeholder-white/40 focus:outline-none focus:border-[#7A6FF0] transition-colors"
+            autoFocus
+          />
         </div>
+      </div>
 
-        {/* Search Results */}
-        <div className="max-h-[400px] overflow-y-auto">
-          {searchQuery.trim() === '' ? (
-            <div className="p-8 text-center">
-              <Music className="w-8 h-8 text-white/30 mx-auto mb-3" />
-              <p className="text-white/60 text-sm">Start typing to search for songs</p>
-            </div>
-          ) : searchResults.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-white/60 text-sm">No songs found</p>
-            </div>
-          ) : (
-            <div className="p-2">
-              {searchResults.map((song) => (
-                <button
-                  key={song.id}
-                  onClick={() => handleSelectSong(song)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-[#2A2A2A] rounded-xl transition-colors text-left"
-                >
-                  <div className="w-12 h-12 bg-[#2A2A2A] rounded-lg flex-shrink-0 overflow-hidden">
-                    <img
-                      src={`https://images.unsplash.com/${song.image}?w=48&h=48&fit=crop`}
-                      alt={song.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-white/90 font-medium text-sm truncate">{song.title}</h4>
-                    <p className="text-white/60 text-xs truncate">{song.artist}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+      {/* Search Results */}
+      <div className="max-h-60 overflow-y-auto">
+        {searchQuery.trim() === '' ? (
+          <div className="p-4 text-center">
+            <Music className="w-6 h-6 text-white/30 mx-auto mb-2" />
+            <p className="text-white/60 text-xs">Start typing to search</p>
+          </div>
+        ) : searchResults.length === 0 ? (
+          <div className="p-4 text-center">
+            <p className="text-white/60 text-xs">No songs found</p>
+          </div>
+        ) : (
+          <div className="p-2">
+            {searchResults.map((song) => (
+              <button
+                key={song.id}
+                onClick={() => handleSelectSong(song)}
+                className="w-full flex items-center gap-3 p-2 hover:bg-[#2A2A2A] rounded-lg transition-colors text-left"
+              >
+                <div className="w-10 h-10 bg-[#2A2A2A] rounded-lg flex-shrink-0 overflow-hidden">
+                  <img
+                    src={`https://images.unsplash.com/${song.image}?w=40&h=40&fit=crop`}
+                    alt={song.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-white/90 font-medium text-xs truncate">{song.title}</h4>
+                  <p className="text-white/60 text-xs truncate">{song.artist}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
