@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import YouTube from 'youtube-sr';
-import ytdl from '@distube/ytdl-core';
+import ytdl from 'ytdl-core-discord';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -164,7 +164,7 @@ app.get('/api/songs/download/:videoId', async (req, res) => {
       await new Promise((resolve, reject) => {
         console.log(`Starting audio download for video ${videoId}...`);
         const writeStream = fs.createWriteStream(filePath);
-        ytdl(videoId, { format: audioFormat })
+        ytdl(videoId, { format: audioFormat, type: 'opus' })
           .pipe(writeStream)
           .on('finish', resolve)
           .on('error', reject);
@@ -244,4 +244,6 @@ app.get('/api/downloads/:videoId/:fileName', async (req, res) => {
 });
 
 // This is the main export for Vercel
-export default app;
+export default (req, res) => {
+  app(req, res);
+};
