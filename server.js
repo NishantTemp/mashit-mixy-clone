@@ -155,7 +155,7 @@ app.get('/api/songs/download/:videoId', async (req, res) => {
         throw error;
       }
       
-      // Store the result_url in the database for later retrieval
+      // Store the result_url in the database
       if (mvsepData.success && mvsepData.data && mvsepData.data.link) {
         const videoToUpdate = db.videos.find(v => v.videoId === videoId);
         if (videoToUpdate) {
@@ -257,28 +257,48 @@ app.get('/api/songs/mvsep-status/:videoId', async (req, res) => {
     console.log(`MVSEP status data:`, statusData);
 
     if (statusData.status === 'done' && statusData.data && statusData.data.files) {
-      console.log(`Processing completed for ${videoId}, downloading separated stems...`);
-      const videoDir = path.join(downloadsDir, videoId);
-      const stemNames = ['vocals', 'drums', 'bass', 'other', 'instrumental'];
-      const stemPaths = {};
-      for (let i = 0; i < stemNames.length; i++) {
-        const stemName = stemNames[i];
-        const stemUrl = statusData.data.files[i].url; // Assuming data.files is an array of objects with url in order: vocals, drums, bass, other, instrumental
-        const stemFileName = `${stemName}-${videoId}.mp3`;
-        const stemFilePath = path.join(videoDir, stemFileName);
-        if (!fs.existsSync(stemFilePath)) {
-          console.log(`Downloading ${stemName} for ${videoId}...`);
-          const response = await fetch(stemUrl);
-          const writeStream = fs.createWriteStream(stemFilePath);
-          await new Promise((resolve, reject) => {
-            response.body.pipe(writeStream);
-            writeStream.on('finish', resolve);
-            writeStream.on('error', reject);
-          });
-          console.log(`${stemName} downloaded successfully for ${videoId}`);
+        console.log(`Processing completed for ${videoId}, downloading separated stems...`);
+        const videoDir = path.join(downloadsDir, videoId);
+        const stemNames = ['vocals', 'drums', 'bass', 'other', 'instrumental'];
+        const stemPaths = {};
+        
+        // Download all stems first
+        for (let i = 0; i < stemNames.length; i++) {
+          const stemName = stemNames[i];
+          const stemUrl = statusData.data.files[i].url;
+          const stemFileName = `${stemName}-${videoId}.mp3`;
+          const stemFilePath = path.join(videoDir, stemFileName);
+          
+          if (!fs.existsSync(stemFilePath)) {
+            console.log(`Downloading ${stemName} for ${videoId}...`);
+            const response = await fetch(stemUrl);
+            const writeStream = fs.createWriteStream(stemFilePath);
+            await new Promise((resolve, reject) => {
+              response.body.pipe(writeStream);
+              writeStream.on('finish', resolve);
+              writeStream.on('error', reject);
+            });
+            console.log(`${stemName} downloaded successfully for ${videoId}`);
+          }
+          stemPaths[stemName] = stemFilePath;
         }
-        stemPaths[stemName] = stemFilePath;
-      }
+        
+        // Clean up unnecessary files after all stems are downloaded
+        console.log(`Cleaning up unnecessary files for ${videoId}...`);
+        const filesToDelete = ['bass', 'drums', 'vocals', videoId].map(stem => 
+          path.join(videoDir, `${stem === videoId ? videoId : stem}-${videoId}.mp3`)
+        );
+        
+        for (const file of filesToDelete) {
+          try {
+            if (fs.existsSync(file)) {
+              await fsPromises.unlink(file);
+              console.log(`Deleted file: ${file}`);
+            }
+          } catch (error) {
+            console.error(`Error deleting file ${file}:`, error);
+          }
+        }
       // Set vocals and instrumental
       const vocalsFileName = `vocals-${videoId}.mp3`;
       const instFileName = `instrumental-${videoId}.mp3`;

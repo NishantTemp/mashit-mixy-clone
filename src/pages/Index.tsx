@@ -22,7 +22,7 @@ const instrumentalAudioRef = useRef<HTMLAudioElement>(null);
     const interval = setInterval(async () => {
       console.log(`Polling MVSEP status for song: ${song.title}`);
       try {
-        const response = await fetch(`http://localhost:3001/api/songs/mvsep-status/${song.id}`);
+        const response = await fetch(`/api/songs/mvsep-status/${song.id}`);
         if (response.ok) {
           const data = await response.json();
           if (data.status === 'completed') {
