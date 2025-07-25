@@ -13,6 +13,9 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=20.18.1"
+  },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",
     "@hookform/resolvers": "^3.9.0",
