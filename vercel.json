@@ -3,11 +3,11 @@
   "builds": [
     {
       "src": "api/**/*.js",
-      "use": "@vercel/node@3.0.0"
+      "use": "@vercel/node@5.3.6"
     },
     {
       "src": "package.json",
-      "use": "@vercel/static-build@3.0.0",
+      "use": "@vercel/static-build@2.7.16",
       "config": { "zeroConfig": true }
     }
   ],
