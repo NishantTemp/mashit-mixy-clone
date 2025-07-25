@@ -1,22 +1,45 @@
 import { type NextRequest } from 'next/server';
+import YouTube from 'youtube-sr';
 
 export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
   try {
-    // Mock data for now - replace with actual database query later
-    const songs = [
-      { id: 1, title: "Summer Nights", artist: "Luna Bay", image: "photo-1618160702438-9b02ab6515c9" },
-      { id: 2, title: "Electric Dreams", artist: "Neon Waves", image: "photo-1535268647677-057b9d5e3905" },
-      { id: 3, title: "City Lights", artist: "Urban Echo", image: "photo-1582562124811-c09040d0a901" },
-    ];
+    const query = request.nextUrl.searchParams.get('q') || '';
+    
+    if (!query) {
+      return new Response(JSON.stringify([]), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    const YouTubeClient = YouTube;
+    const videos = await YouTubeClient.search(query + ' song', {
+      limit: 10,
+      type: 'video',
+      safeSearch: true
+    });
+
+    if (!Array.isArray(videos)) {
+      throw new Error('Search results are not in expected format');
+    }
+
+    const songs = videos.map(video => ({
+      id: video.id,
+      title: video.title,
+      artist: video.channel?.name || 'Unknown Artist',
+      image: video.thumbnail?.url || '',
+      searchTerm: query.trim()
+    }));
 
     return new Response(JSON.stringify(songs), {
       headers: { 'Content-Type': 'application/json' },
       status: 200
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch songs' }), {
+    console.error('YouTube search error:', error);
+    return new Response(JSON.stringify({ error: 'Failed to search songs' }), {
       headers: { 'Content-Type': 'application/json' },
       status: 500
     });

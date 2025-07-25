@@ -8,6 +8,9 @@ import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showEditControls, setShowEditControls] = useState(false);
+  const [vocalVolume, setVocalVolume] = useState(1);
+  const [instrumentalVolume, setInstrumentalVolume] = useState(1);
   const [vocalSong, setVocalSong] = useState<Song | null>(null);
   const [instrumentalSong, setInstrumentalSong] = useState<Song | null>(null);
   const [activeSearch, setActiveSearch] = useState<'vocal' | 'instrumental' | null>(null);
@@ -54,6 +57,13 @@ const instrumentalAudioRef = useRef<HTMLAudioElement>(null);
       pollMvsepStatus(instrumentalSong, setInstrumentalSong);
     }
   }, [instrumentalSong]);
+
+  useEffect(() => {
+    const vocalAudio = vocalAudioRef.current;
+    const instrAudio = instrumentalAudioRef.current;
+    if (vocalAudio) vocalAudio.volume = vocalVolume;
+    if (instrAudio) instrAudio.volume = instrumentalVolume;
+  }, [vocalVolume, instrumentalVolume]);
 
   useEffect(() => {
     const vocalAudio = vocalAudioRef.current;
@@ -257,10 +267,40 @@ const instrumentalAudioRef = useRef<HTMLAudioElement>(null);
           <Button 
             variant="outline" 
             className="bg-[#1A1A1A] border-[#2A2A2A] text-white/80 hover:bg-[#202020] hover:text-white rounded-full px-6 py-3 flex-1 sm:flex-none"
+            onClick={() => setShowEditControls(!showEditControls)}
           >
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
+          {showEditControls && (
+            <div className="flex flex-col gap-4 w-full">
+              <div className="flex items-center gap-2">
+                <span className="text-white/60 text-sm">Vocal Volume</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={vocalVolume}
+                  onChange={(e) => setVocalVolume(parseFloat(e.target.value))}
+                  className="flex-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-white/60 text-sm">Instrumental Volume</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={instrumentalVolume}
+                  onChange={(e) => setInstrumentalVolume(parseFloat(e.target.value))}
+                  className="flex-1"
+                />
+              </div>
+            </div>
+          )}
+
           <Button 
             className="bg-[#7A6FF0] hover:bg-[#6B5FE0] text-white rounded-full px-6 py-3 flex-1 sm:flex-none"
           >

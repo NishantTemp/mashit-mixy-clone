@@ -19,7 +19,7 @@ const SongSearch = ({ onSelectSong, onClose, searchPlaceholder = "Search songs..
     queryKey: ['songs', searchQuery],
     queryFn: async () => {
       if (!searchQuery.trim()) return [];
-      const response = await fetch(`http://localhost:3001/api/songs?q=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/songs?q=${encodeURIComponent(searchQuery)}`);
       if (!response.ok) {
         throw new Error('Failed to fetch songs');
       }
@@ -30,7 +30,7 @@ const SongSearch = ({ onSelectSong, onClose, searchPlaceholder = "Search songs..
 
   const handleSelectSong = async (song: Song) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/songs/download/${song.id}?searchTerm=${encodeURIComponent(searchQuery)}`);
+      const response = await fetch(`/api/songs/download/${song.id}?searchTerm=${encodeURIComponent(searchQuery)}`);
       if (!response.ok) {
         throw new Error('Failed to download song');
       }
