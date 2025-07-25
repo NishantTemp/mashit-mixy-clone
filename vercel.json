@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "app/api/**/*.ts",
       "use": "@vercel/node@5.3.6"
     },
     {
@@ -12,7 +12,9 @@
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/api/songs\\?q=(?<query>[^&]*)", "dest": "/app/api/songs/route?q=$query" },
+    { "src": "/api/songs/download/(?<id>[^/]+)\\?searchTerm=(?<term>[^&]*)", "dest": "/app/api/songs/download/$id?searchTerm=$term" },
+    { "src": "/api/(.*)", "dest": "/app/api/$1" },
     { "src": "/(.*)", "dest": "/dist/$1" }
   ]
 }
