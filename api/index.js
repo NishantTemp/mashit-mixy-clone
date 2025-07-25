@@ -1,3 +1,8 @@
+import express from 'express';
+import { createServer } from 'http';
 import app from '../server.js';
 
-export default app;
+const server = express();
+server.all('*', app);
+
+export default createServer(server);
