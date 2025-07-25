@@ -7,10 +7,11 @@
     "dev": "vite",
     "api": "node server.js",
     "dev:all": "concurrently \"npm run dev\" \"npm run api\"",
-    "build": "vite build",
+    "build": "vite build && cp -r api dist/",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "vercel-build": "npm run build"
   },
   "dependencies": {
     "@distube/ytdl-core": "^4.16.12",

@@ -330,7 +330,14 @@ app.get('/api/songs/mvsep-status/:videoId', async (req, res) => {
   }
 });
 
-const PORT = 3001;
-app.listen(PORT, () => {
-  console.log(`API server running on port ${PORT}`);
-});
+// Only start the server if we're not being imported
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const PORT = process.env.PORT || 3001;
+  const HOST = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+
+  app.listen(PORT, HOST, () => {
+    console.log(`API server running on ${HOST}:${PORT}`);
+  });
+}
+
+export default app;
