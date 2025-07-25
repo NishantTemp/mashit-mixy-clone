@@ -1,21 +1,112 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Pause, Music, Plus, Edit, Share, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import SongSearch from '@/components/SongSearch';
 import { type Song } from '@/types/song';
+import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [vocalSong, setVocalSong] = useState<Song | null>(null);
   const [instrumentalSong, setInstrumentalSong] = useState<Song | null>(null);
   const [activeSearch, setActiveSearch] = useState<'vocal' | 'instrumental' | null>(null);
+const vocalAudioRef = useRef<HTMLAudioElement>(null);
+const instrumentalAudioRef = useRef<HTMLAudioElement>(null);
+
+  const pollMvsepStatus = async (song: Song, setSong: (song: Song) => void) => {
+    console.log(`Initiating polling for song: ${song.title}`);
+    const interval = setInterval(async () => {
+      console.log(`Polling MVSEP status for song: ${song.title}`);
+      try {
+        const response = await fetch(`http://localhost:3001/api/songs/mvsep-status/${song.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.status === 'completed') {
+            console.log(`Separation complete for ${song.title}`);
+            setSong({ ...song, separated: true });
+            clearInterval(interval);
+            toast({ title: 'Processing Complete', description: `${song.title} separation is ready.` });
+          } else if (data.status === 'failed') {
+            console.log(`Separation failed for ${song.title}: ${data.message}`);
+            clearInterval(interval);
+            toast({ title: 'Processing Failed', description: `Audio separation failed for ${song.title}: ${data.message}`, variant: 'destructive' });
+          }
+        }
+      } catch (error) {
+        console.error('Error polling MVSEP status:', error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  };
+
+  useEffect(() => {
+    if (vocalSong && vocalSong.downloadUrl && !vocalSong.separated) {
+      console.log(`Starting polling for vocal song: ${vocalSong.title}`);
+      pollMvsepStatus(vocalSong, setVocalSong);
+    }
+  }, [vocalSong]);
+
+  useEffect(() => {
+    if (instrumentalSong && instrumentalSong.downloadUrl && !instrumentalSong.separated) {
+      console.log(`Starting polling for instrumental song: ${instrumentalSong.title}`);
+      pollMvsepStatus(instrumentalSong, setInstrumentalSong);
+    }
+  }, [instrumentalSong]);
+
+  useEffect(() => {
+    const vocalAudio = vocalAudioRef.current;
+    const instrAudio = instrumentalAudioRef.current;
+    if (!vocalAudio || !instrAudio) return;
+
+    const checkBothEnded = () => {
+      if (vocalAudio.ended && instrAudio.ended) {
+        setIsPlaying(false);
+      }
+    };
+
+    vocalAudio.addEventListener('ended', checkBothEnded);
+    instrAudio.addEventListener('ended', checkBothEnded);
+
+    return () => {
+      vocalAudio.removeEventListener('ended', checkBothEnded);
+      instrAudio.removeEventListener('ended', checkBothEnded);
+    };
+  }, []);
 
   const handlePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    const vocalAudio = vocalAudioRef.current;
+    const instrAudio = instrumentalAudioRef.current;
+
+    if (vocalAudio && instrAudio && vocalSong?.separated && instrumentalSong?.separated) {
+      if (isPlaying) {
+        vocalAudio.pause();
+        instrAudio.pause();
+        setIsPlaying(false);
+      } else {
+        vocalAudio.currentTime = 0;
+        instrAudio.currentTime = 0;
+        vocalAudio.play();
+        instrAudio.play();
+        setIsPlaying(true);
+      }
+    } else {
+      console.log('Playback attempted but separation not complete');
+      toast({
+        title: 'Not Ready',
+        description: 'Waiting for audio separation to complete.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleFlip = () => {
+    if (isPlaying) {
+      vocalAudioRef.current?.pause();
+      instrumentalAudioRef.current?.pause();
+      setIsPlaying(false);
+    }
     const temp = vocalSong;
     setVocalSong(instrumentalSong);
     setInstrumentalSong(temp);
@@ -26,10 +117,11 @@ const Index = () => {
   };
 
   const handleSelectSong = (song: Song) => {
+    const updatedSong = { ...song, separated: undefined }; // Ensure polling starts
     if (activeSearch === 'vocal') {
-      setVocalSong(song);
+      setVocalSong(updatedSong);
     } else if (activeSearch === 'instrumental') {
-      setInstrumentalSong(song);
+      setInstrumentalSong(updatedSong);
     }
     setActiveSearch(null);
   };
@@ -53,7 +145,7 @@ const Index = () => {
           <>
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#2A2A2A] rounded-xl flex items-center justify-center flex-shrink-0">
               <img 
-                src={`https://images.unsplash.com/${song.image}?w=80&h=80&fit=crop`} 
+                src={`${song.image}?w=80&h=80&fit=crop`} 
                 alt="Album art" 
                 className="w-full h-full rounded-xl object-cover" 
               />
@@ -134,7 +226,7 @@ const Index = () => {
             {[...Array(30)].map((_, i) => (
               <div 
                 key={i} 
-                className="bg-[#7A6FF0] rounded-full transition-all duration-300 flex-shrink-0"
+                className={`bg-[#7A6FF0] rounded-full transition-all duration-300 flex-shrink-0 ${isPlaying ? 'animate-wave' : ''}`}
                 style={{
                   width: '2px',
                   height: `${Math.random() * 30 + 8}px`,
@@ -177,8 +269,10 @@ const Index = () => {
           </Button>
         </div>
       </div>
-    </div>
-  );
+    <audio ref={vocalAudioRef} src={vocalSong?.separated ? `http://localhost:3001/downloads/${vocalSong.id}/other-${vocalSong.id}.mp3` : ''} />
+    <audio ref={instrumentalAudioRef} src={instrumentalSong?.separated ? `http://localhost:3001/downloads/${instrumentalSong.id}/instrumental-${instrumentalSong.id}.mp3` : ''} />
+  </div>
+);
 };
 
 export default Index;
