@@ -9,7 +9,7 @@ import { promises as fsPromises } from 'fs';
 import https from 'https';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-import { Blob } from 'node:buffer';
+import FormData from 'form-data';
 
 dotenv.config();
 
@@ -178,10 +178,7 @@ app.get('/api/songs/download/:videoId', async (req, res) => {
       console.log(`Sending request to MVSEP API for ${videoId}...`);
       const formData = new FormData();
       formData.append('api_token', process.env.MVSEP_API_TOKEN);
-      
-      const audioBuffer = await fsPromises.readFile(filePath);
-      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-      formData.append('audiofile', audioBlob, fileName);
+      formData.append('audiofile', fs.createReadStream(filePath));
       const mvsepResponse = await fetch('https://mvsep.com/api/separation/create', {
         method: 'POST',
         body: formData
