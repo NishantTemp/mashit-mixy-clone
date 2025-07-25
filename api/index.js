@@ -133,30 +133,46 @@ app.get('/api/songs/download/:videoId', async (req, res) => {
     }
 
     // Get video info
-    const info = await ytdl.getInfo(videoId);
-    const audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+    let info, audioFormat;
+    try {
+      info = await ytdl.getInfo(videoId);
+      audioFormat = ytdl.chooseFormat(info.formats, { quality: 'highestaudio' });
+    } catch (error) {
+      console.error(`Failed to get video info for ${videoId}:`, error);
+      return res.status(500).json({ error: 'Failed to get video info' });
+    }
     
     // Download thumbnail
-    if (!fs.existsSync(thumbnailPath)) {
-      await new Promise((resolve, reject) => {
-        https.get(info.videoDetails.thumbnails[0].url, (response) => {
-          const fileStream = fs.createWriteStream(thumbnailPath);
-          response.pipe(fileStream);
-          fileStream.on('finish', resolve);
-          fileStream.on('error', reject);
-        }).on('error', reject);
-      });
+    try {
+      if (!fs.existsSync(thumbnailPath)) {
+        await new Promise((resolve, reject) => {
+          https.get(info.videoDetails.thumbnails[0].url, (response) => {
+            const fileStream = fs.createWriteStream(thumbnailPath);
+            response.pipe(fileStream);
+            fileStream.on('finish', resolve);
+            fileStream.on('error', reject);
+          }).on('error', reject);
+        });
+      }
+    } catch (error) {
+        console.error(`Failed to download thumbnail for ${videoId}:`, error);
+        // Non-critical, so we just log it
     }
     
     // Download and convert to MP3
-    await new Promise((resolve, reject) => {
-      console.log(`Starting audio download for video ${videoId}...`);
-      const writeStream = fs.createWriteStream(filePath);
-      ytdl(videoId, { format: audioFormat })
-        .pipe(writeStream)
-        .on('finish', resolve)
-        .on('error', reject);
-    });
+    try {
+      await new Promise((resolve, reject) => {
+        console.log(`Starting audio download for video ${videoId}...`);
+        const writeStream = fs.createWriteStream(filePath);
+        ytdl(videoId, { format: audioFormat })
+          .pipe(writeStream)
+          .on('finish', resolve)
+          .on('error', reject);
+      });
+    } catch (error) {
+        console.error(`Failed to download audio for ${videoId}:`, error);
+        return res.status(500).json({ error: 'Failed to download audio' });
+    }
 
     console.log(`Audio download completed for ${videoId}.`);
 
