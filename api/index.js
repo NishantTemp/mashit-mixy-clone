@@ -149,64 +149,68 @@ app.get('/api/songs/download/:videoId', async (req, res) => {
     }
     
     // Download and convert to MP3
-    const writeStream = fs.createWriteStream(filePath);
-    ytdl(videoId, { format: audioFormat })
-      .pipe(writeStream);
-    
-    writeStream.on('finish', async () => {
-      // Update database
-      if (!existingVideo) {
-        db.videos.push({
-          videoId,
-          searchTerm: searchTerm || info.videoDetails.title,
-          thumbnail: `/api/downloads/${videoId}/thumbnail.jpg`,
-          downloadedAt: new Date().toISOString()
-        });
-        await fsPromises.writeFile(dbPath, JSON.stringify(db, null, 2));
-      }
-
-      // Send request to MVSEP API
-      let mvsepData;
-      try {
-        const formData = new FormData();
-        formData.append('api_token', process.env.MVSEP_API_TOKEN);
-        
-        const audioBuffer = await fsPromises.readFile(filePath);
-        const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-        formData.append('audiofile', audioBlob, fileName);
-        const mvsepResponse = await fetch('https://mvsep.com/api/separation/create', {
-          method: 'POST',
-          body: formData
-        });
-
-        const responseText = await mvsepResponse.text();
-        mvsepData = JSON.parse(responseText);
-      } catch (error) {
-        console.error(`MVSEP API request failed for ${videoId}:`, error);
-        // Don't fail the whole request, just log the error
-      }
-      
-      // Store the result_url in the database
-      if (mvsepData && mvsepData.success && mvsepData.data && mvsepData.data.link) {
-        const videoToUpdate = db.videos.find(v => v.videoId === videoId);
-        if (videoToUpdate) {
-          videoToUpdate.mvsepResultUrl = mvsepData.data.link;
-          await fsPromises.writeFile(dbPath, JSON.stringify(db, null, 2));
-        }
-      }
-
-      res.json({
-        downloadUrl: `/api/downloads/${videoId}/${fileName}`,
-        thumbnail: `/api/downloads/${videoId}/thumbnail.jpg`,
-        title: searchTerm || info.videoDetails.title,
-        mvsepStatus: 'processing',
-        mvsepResultUrl: mvsepData && mvsepData.data ? mvsepData.data.link : null
-      });
+    await new Promise((resolve, reject) => {
+      console.log(`Starting audio download for video ${videoId}...`);
+      const writeStream = fs.createWriteStream(filePath);
+      ytdl(videoId, { format: audioFormat })
+        .pipe(writeStream)
+        .on('finish', resolve)
+        .on('error', reject);
     });
+
+    console.log(`Audio download completed for ${videoId}.`);
+
+    // Update database
+    if (!existingVideo) {
+      db.videos.push({
+        videoId,
+        searchTerm: searchTerm || info.videoDetails.title,
+        thumbnail: `/api/downloads/${videoId}/thumbnail.jpg`,
+        downloadedAt: new Date().toISOString()
+      });
+      await fsPromises.writeFile(dbPath, JSON.stringify(db, null, 2));
+      console.log(`Database updated for new video ${videoId}.`);
+    }
+
+    // Send request to MVSEP API
+    let mvsepData;
+    try {
+      console.log(`Sending request to MVSEP API for ${videoId}...`);
+      const formData = new FormData();
+      formData.append('api_token', process.env.MVSEP_API_TOKEN);
+      
+      const audioBuffer = await fsPromises.readFile(filePath);
+      const audioBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+      formData.append('audiofile', audioBlob, fileName);
+      const mvsepResponse = await fetch('https://mvsep.com/api/separation/create', {
+        method: 'POST',
+        body: formData
+      });
+
+      const responseText = await mvsepResponse.text();
+      console.log(`MVSEP API response for ${videoId}:`, responseText);
+      mvsepData = JSON.parse(responseText);
+    } catch (error) {
+      console.error(`MVSEP API request failed for ${videoId}:`, error);
+      // Don't fail the whole request, just log the error
+    }
     
-    writeStream.on('error', (error) => {
-      console.error('Error downloading audio:', error);
-      res.status(500).json({ error: 'Failed to download audio' });
+    // Store the result_url in the database
+    if (mvsepData && mvsepData.success && mvsepData.data && mvsepData.data.link) {
+      const videoToUpdate = db.videos.find(v => v.videoId === videoId);
+      if (videoToUpdate) {
+        videoToUpdate.mvsepResultUrl = mvsepData.data.link;
+        await fsPromises.writeFile(dbPath, JSON.stringify(db, null, 2));
+        console.log(`Database updated with mvsepResultUrl for ${videoId}.`);
+      }
+    }
+
+    res.json({
+      downloadUrl: `/api/downloads/${videoId}/${fileName}`,
+      thumbnail: `/api/downloads/${videoId}/thumbnail.jpg`,
+      title: searchTerm || info.videoDetails.title,
+      mvsepStatus: 'processing',
+      mvsepResultUrl: mvsepData && mvsepData.data ? mvsepData.data.link : null
     });
   } catch (error) {
     console.error('Download error:', error);
